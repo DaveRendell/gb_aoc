@@ -1,4 +1,5 @@
 include "hardware.inc"
+include "src/charmap.inc"
 
 SECTION "VBlankInterrupt", rom0[INT_HANDLER_VBLANK]
     jp VBlank
@@ -8,6 +9,11 @@ SECTION "Header", rom0[$100]
 	jp Init
 
 	ds $150 - @, 0 ; Make room for the header
+
+SECTION "CharacterTiles", rom0
+CharacterTiles:
+	incbin "build/bin/characters.1bpp"
+.end:
 
 SECTION "Init", rom0
 Init:
@@ -32,28 +38,59 @@ Init:
 	ld hl, STARTOF(OAM)
 	ld bc, OAM_SIZE
 	call MemClear
+	
+	; Clear Nintendo logo from VRAM
+	ld hl, STARTOF(VRAM)
+	ld bc, TILE_SIZE * CHARVAL(" ")
+	call MemClear
+
+	; Load characters into VRAM at tile IDs matching ASCII values
+	ld hl, STARTOF(VRAM) + TILE_SIZE * CHARVAL(" ")
+	ld de, CharacterTiles
+	ld bc, CharacterTiles.end - CharacterTiles
+	call MemCopy1bpp
 
     ; Turn the LCD on
-	ld a, LCDC_ON | LCDC_BG_ON | LCDC_OBJ_ON | LCDC_OBJ_8
+	ld a, LCDC_ON \
+		| LCDC_BG_ON \
+		| LCDC_OBJ_ON \
+		| LCDC_OBJ_8 \
+		| LCDC_BG_9800 \
+		| LCDC_BLOCK01
 	ld [rLCDC], a
 
     ; During the first (blank) frame, initialize display registers
-	ld a, $e4
+	ld a, $E4
 	ld [rBGP], a
-	ld a, $e4
+	ld a, $E4
 	ld [rOBP0], a
+	
+	; Setup complete
 
-    ; Set up interrupts
-	ld a, IE_VBLANK
-	ld [rIE], a
+	; Test printing characters A -> Z
+	call ConsoleInit
+	REPT 3
+	ld c, CHARVAL("A")
+:
+	push bc
+	ld de, TestString
+	ld b, TestString.end - TestString
+	call ConsolePrint
+	pop bc
+	ld b, c
+	call ConsolePrintChar
+	call ConsoleNewLine
 
-    ; Clean rIF and enable interrupts
-	xor a
-	ldh [rIF], a
-    ei 
-    ; Fall through into main loop
+	inc c
+	ld a, CHARVAL("Z") + 1
+	cp a, c
+	jr nz, :-
+	ENDR
+
 MainLoop:
-    ld b, b
-    halt
+	nop
     jr MainLoop
 
+TestString:
+	db "Character: "
+.end

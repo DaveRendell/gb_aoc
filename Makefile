@@ -7,7 +7,17 @@ OBJECTS := $(patsubst %.asm,build/obj/%.o,${ASM_SOURCES})
 
 all: dist/output.gb dist/output.map
 
-build/obj/%.o: %.asm hardware.inc
+build/img/characters.png: scripts/generate_font_tileset.py scripts/Pixelchunk.ttf
+	@echo Generating characters.png
+	@mkdir -p build/img
+	@python3 scripts/generate_font_tileset.py
+
+build/bin/characters.1bpp: build/img/characters.png
+	@echo Converting characters.png to characters.1bpp
+	@mkdir -p build/bin
+	@rgbgfx -d 1 -o $@ $<
+
+build/obj/%.o: %.asm hardware.inc build/bin/characters.1bpp
 	@echo Assembling $<
 	@mkdir -p $(dir $@)
 	@rgbasm -o $@ $<

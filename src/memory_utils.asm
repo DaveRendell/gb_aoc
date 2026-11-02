@@ -15,6 +15,22 @@ MemCopy::
     jr nz, MemCopy
     ret
 
+; Copy 1bpp bytes into VRAM
+; Ensure bc != 0 on pass to avoid memory corruption.
+; @param de: Source
+; @param hl: Destination
+; @param bc: Source length
+MemCopy1bpp::
+    ld a, [de]
+    ld [hli], a
+    ld [hli], a
+    inc de
+    dec bc
+    ld a, b
+    or a, c
+    jr nz, MemCopy1bpp
+    ret
+
 ; Initialise memory in an area to 0
 ; Ensure bc != 0 on pass to avoid memory corruption.
 ; @param hl: AreaStart
