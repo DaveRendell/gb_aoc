@@ -1,3 +1,5 @@
+CHARMAP "\n", 10
+
 CHARMAP " ", 32
 CHARMAP "!", 33
 CHARMAP "\"", 34

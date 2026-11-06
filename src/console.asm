@@ -1,4 +1,5 @@
 INCLUDE "hardware.inc"
+INCLUDE "src/charmap.inc"
 
 SECTION "ConsoleVars", wram0
 ; Pointer to the tile in VRAM Tilemap 0 at the start of the line we're
@@ -60,6 +61,25 @@ ConsolePrintChar::
 
     ld [hl], b
 
+    ret
+
+; Print a single numeric byte in 2 digit hexidecimal
+; @param b - the character to print
+; @clobbers hl, a, c
+ConsolePrintInt::
+    ld a, b
+    ld c, b
+    swap a
+    and a, $F
+    add a, CHARVAL("0")
+    ld b, a
+    call ConsolePrintChar
+    ld a, c
+    and a, $F
+    add a, CHARVAL("0")
+    ld b, a
+    call ConsolePrintChar
+    ld b, c
     ret
 
 ; Move the console cursor to the start of the next line, and clear it

@@ -1,10 +1,6 @@
 include "hardware.inc"
 include "src/charmap.inc"
 
-SECTION "VBlankInterrupt", rom0[INT_HANDLER_VBLANK]
-    jp VBlank
-    ds INT_HANDLER_STAT - @, 0
-
 SECTION "Header", rom0[$100]
 	jp Init
 
@@ -67,25 +63,9 @@ Init:
 	
 	; Setup complete
 
-	; Test printing characters A -> Z
 	call ConsoleInit
-	REPT 3
-	ld c, CHARVAL("A")
-:
-	push bc
-	ld de, TestString
-	ld b, TestString.end - TestString
-	call ConsolePrint
-	pop bc
-	ld b, c
-	call ConsolePrintChar
-	call ConsoleNewLine
 
-	inc c
-	ld a, CHARVAL("Z") + 1
-	cp a, c
-	jr nz, :-
-	ENDR
+	call Solution20251	
 
 MainLoop:
 	nop
